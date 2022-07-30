@@ -3,19 +3,29 @@ library(plotly)
 library(shiny)
 library(DT)
 library(statmod)
+library(shinyjs)
+library(heatmaply)
 
 load("shinyPack.RData")
 load("shinyPackTitration.RData")
 load("metabTitr.RData")
+dataNorm2 <- read.csv("greenMetabolomicsRaw.csv")
 
 navbarPage("Multi-omics assessment of protein restriction",
+           useShinyjs(),
+           extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('plotly_click-nVolcano', 'null'); }",
+                         functions = c("resetClick")),
+           extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('plotly_click-nVolcano2', 'null'); }",
+                         functions = c("resetClick2")),
            tabPanel("Introduction",
                     fluidPage(
-                      titlePanel("Profiling hepatic omic responses to low protein diets"
-                      ),
+                      titlePanel("Profiling hepatic omic responses to low protein diets"),
                       #mainPanel(includeHTML("include.html"))
                       mainPanel(
-                        p("PLACEHOLDER TEXT"),
+                        tags$h4(tags$a(href = "https://www.sciencedirect.com/science/article/pii/S1550413121006379",
+                                       "Green, Lamming et al.", target="_blank")),
+                        tags$h4(tags$a(href = "https://macarthur.shinyapps.io/kdshiny/",
+                                       "MacArthur, Mitchell et al.", target="_blank")),
                         img(src = "frontpage.jpg",
                             width = "100%")
                       )
@@ -42,9 +52,10 @@ navbarPage("Multi-omics assessment of protein restriction",
                                    selectInput("geneChoose",
                                                label = "Gene for DE Table Boxplot",
                                                choices = tab_diet07$symbol),
-                                   p("To display a gene in the lower boxplot, click on a point
-                                     on the volcano. Or a gene can be selected from the dropdown
-                                     menu and displayed on the lower boxplot on the DE Tables tab.")
+                                   actionButton("reset", "Plot selected gene"),
+                                   p("To change the lower boxplot, either click a point
+                                     on the volcano plot OR select a gene from the dropdown 
+                                     menu then click the button below")
                       ),
                       mainPanel(
                         tabsetPanel(
@@ -88,9 +99,10 @@ navbarPage("Multi-omics assessment of protein restriction",
                                   selectInput("geneChoose2",
                                               label = "Gene for DE Table Boxplot",
                                               choices = p18_p00_top$symbol),
-                                  p("To display a gene in the lower boxplot, click on a point
-                                     on the volcano. Or a gene can be selected from the dropdown
-                                     menu and displayed on the lower boxplot on the DE Tables tab.")
+                                  actionButton("reset2", "Plot selected gene"),
+                                  p("To change the lower boxplot, either click a point
+                                     on the volcano plot OR select a gene from the dropdown 
+                                     menu then click the button below")
                      ),
                      mainPanel(
                        tabsetPanel(
@@ -108,6 +120,30 @@ navbarPage("Multi-omics assessment of protein restriction",
                      )
                    )
           ),
+          tabPanel("Strain by Sex Metabolomics",
+                   fluidRow(
+                     column(2,
+                            selectInput("Aov_group1",
+                                        label = "Choose ANOVA Group",
+                                        choices = c("Main effect: Sex" = "sexLs",
+                                                    "Main effect: Strain" = "strainLs",
+                                                    "Main effect: Diet" = "dietLs",
+                                                    "Interaction: Sex x strain" = "sexStrainLs",
+                                                    "Interaction: Sex x diet" = "sexDietLs",
+                                                    "Interaction: Strain x diet" = "strainDietLs",
+                                                    "Interaction: Sex x strain x diet" = "sexStrainDietLs"),
+                                        selected = "sexLs"
+                            ),
+                            selectInput('metab2', 'Metabolite', 
+                                        colnames(dataNorm2),
+                                        selected = "Serine")),
+                     column(10,
+                            plotOutput('metabPlot2'),
+                            plotlyOutput('metabHeat2'),
+                            verbatimTextOutput('aovLs')
+                     )
+                   )
+          ),
           tabPanel("Titration Metabolomics",
                    fluidRow(
                      column(2,
@@ -119,8 +155,10 @@ navbarPage("Multi-omics assessment of protein restriction",
                                         "Ophthalmic_acid")),
                      column(10,
                             plotOutput('metabPlot'),
-                            plotOutput('metabPlotDRPR'))
+                            plotOutput('metabPlotDRPR'),
+                            plotlyOutput('metabHeat1'))
                      )
                    )
           )
+
 

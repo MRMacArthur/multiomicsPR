@@ -3,10 +3,13 @@ library(plotly)
 library(shiny)
 library(DT)
 library(statmod)
+library(shinyjs)
+library(heatmaply)
 
 load("shinyPack.RData")
 load("shinyPackTitration.RData")
 load("metabTitr.RData")
+dataNorm2 <- read.csv("greenMetabolomicsRaw.csv")
 
 myTheme <- theme(panel.background = element_blank(),
                  axis.line = element_line(color = "black"),
@@ -47,17 +50,25 @@ function(input, output, session){
     print(p)
   })
   
+
+  observeEvent(input$reset, js$resetClick())
+  
   output$DEbarplot1 <- renderPlotly({
     
     event.data <- event_data("plotly_click",
                              source = "nVolcano")
+    
     if (is.null(event.data)){
-      p <- ggplot(cpmX, aes(x = dietGroup, y = ENSMUSG00000028603, fill = strainDietGroup)) +
+      selFrame <- subset(tab_diet07, symbol == input$geneChoose)
+      selEns <- selFrame$genes
+      
+      p <- ggplot(cpmX, aes_string(x = "dietGroup", y = selEns, fill = "strainDietGroup")) +
         geom_boxplot() + labs(x = "Diet") + facet_grid(~sexGroup+strainGroup) +
         scale_fill_manual(values = c("#565A5C", "#F26F17", "#5AB5DA",
                                      "#FFFFFF", "#FE0000", "#0088AA")) +
         myTheme + guides(fill = F)
       p <- ggplotly(p)
+      
     } else {
       p <- ggplot(cpmX, aes_string(x = "dietGroup", y = event.data$key, fill = "strainDietGroup")) +
         geom_boxplot() + labs(x = "Diet") + facet_grid(~sexGroup+strainGroup) +
@@ -68,6 +79,8 @@ function(input, output, session){
     }
     
   })
+  
+  observeEvent(input$reset2, js$resetClick2())
   
   output$DEbarplot2 <- renderPlotly({
     
@@ -189,6 +202,39 @@ function(input, output, session){
     
   })
   
+  output$metabHeat1 <- renderPlotly({
+    
+    heatmaply(dataNorm[, colnames(dataNorm) %in% c(dataAov$X, "expGroup")],
+              scale = "column",
+              colors = colorRampPalette(colors = c("blue", "white", "red")),
+              k_col = 2, k_row = 2, showticklabels = F)
+    })
   
+  output$metabPlot2 <- renderPlot({
+    
+    p <- ggplot(data = dataNorm2, aes_string(x="Diet", y=input$metab2)) + 
+      geom_boxplot(aes_string(fill = "StrainDiet")) +
+      labs(x = NULL) + myTheme +
+      facet_grid(~Sex+Strain) +
+      scale_fill_manual(values = c("#5AB5DA", "#565A5C",
+                                   "#0088AA", "#FFFFFF"))
+    
+    print(p)
+    
+  })
+  
+  output$aovLs <- renderPrint({
+    unlist(get(input$Aov_group1))
+  })
+  
+  output$metabHeat2 <- renderPlotly({
+    
+    heatmaply(dataNorm2[, colnames(dataNorm2) %in% c(unlist(get(input$Aov_group1)), 
+                                                     "Strain", "Sex", "Diet")],
+              scale = "column",
+              colors = colorRampPalette(colors = c("blue", "white", "red")),
+              k_col = 2, k_row = 2, showticklabels = F)
+    
+    })
   
 }

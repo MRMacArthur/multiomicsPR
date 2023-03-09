@@ -146,13 +146,17 @@ function(input, output, session){
     event.data <- event_data("plotly_click",
                              source = "nVolcano2")
     if (is.null(event.data)){
-      p <- ggplot(cpmFrameTitr, aes(x = txGroup, y = ENSMUSG00000028603, fill = txGroup)) +
+      p <- ggplot(cpmFrameTitr, aes(x = txGroup, 
+                                    y = ENSMUSG00000028603, 
+                                    fill = txGroup)) +
         geom_boxplot() + labs(x = "Diet") +
         scale_fill_brewer(palette = "RdYlBu", direction = -1) +
         myTheme + guides(fill = F)
       p <- ggplotly(p)
     } else {
-      p <- ggplot(cpmFrameTitr, aes_string(x = "txGroup", y = event.data$key, fill = "txGroup")) +
+      p <- ggplot(cpmFrameTitr, aes_string(x = "txGroup", 
+                                           y = event.data$key, 
+                                           fill = "txGroup")) +
         geom_boxplot() + labs(x = "Diet") +
         scale_fill_brewer(palette = "RdYlBu", direction = -1) +
         myTheme + guides(fill = F)
